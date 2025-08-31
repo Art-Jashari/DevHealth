@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to DevHealth! This guide will help you get started.
 
-## 🚀 Quick Start
+##  Quick Start
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
@@ -15,7 +15,7 @@ Thank you for your interest in contributing to DevHealth! This guide will help y
    make dev-setup  # Or manually install rustfmt and clippy
    ```
 
-## 🔧 Development Workflow
+##  Development Workflow
 
 ### Before Starting
 ```bash
@@ -62,7 +62,7 @@ make all
 
 3. **Open a Pull Request** on GitHub
 
-## 📋 Code Standards
+##  Code Standards
 
 ### Rust Code Style
 - **Formatting**: Use `cargo fmt` (enforced)
@@ -97,7 +97,7 @@ style: formatting changes
 chore: maintenance tasks
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Running Tests
 ```bash
@@ -119,7 +119,7 @@ cargo test test_name
 - **Integration tests**: Add to `tests/` directory
 - **Documentation tests**: Add examples in doc comments
 
-## 📚 Documentation
+##  Documentation
 
 ### Generating Documentation
 ```bash
@@ -137,7 +137,7 @@ cargo doc --document-private-items --open
 4. **Document error conditions**
 5. **Link to related functionality**
 
-## 🚀 Features to Implement
+##  Features to Implement
 
 ### High Priority
 - [ ] **Dependency scanning**: Support for multiple package managers
@@ -154,7 +154,7 @@ cargo doc --document-private-items --open
 - [ ] **Notifications**: Email/Slack integration
 - [ ] **Plugins**: Custom scanner support
 
-## 🐛 Issue Reporting
+##  Issue Reporting
 
 ### Bug Reports
 Include:
@@ -171,18 +171,18 @@ Include:
 - Alternative solutions considered
 - Additional context
 
-## 💡 Questions?
+##  Questions?
 
 - **Documentation**: Check `docs/` directory
 - **Examples**: See `examples/` directory (when added)
 - **Issues**: Open a GitHub issue
 - **Discussions**: Use GitHub Discussions
 
-## 🏆 Recognition
+##  Recognition
 
 Contributors will be:
 - Listed in `CONTRIBUTORS.md`
 - Mentioned in release notes
 - Credited in documentation
 
-Thank you for contributing to DevHealth! 🩺
+Thank you for contributing to DevHealth!
