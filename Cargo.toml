@@ -2,9 +2,21 @@
 name = "devhealth"
 version = "0.1.0"
 edition = "2021"
-authors = ["Art-Jashari <your-email@example.com>"]
+authors = ["Art-Jashari <artjashari300@gmail.com>"]
 description = "A CLI tool for monitoring your development environment health"
 license = "MIT"
+repository = "https://github.com/Art-Jashari/DevHealth"
+homepage = "https://github.com/Art-Jashari/DevHealth"
+documentation = "https://docs.rs/devhealth"
+readme = "README.md"
+keywords = ["cli", "development", "health", "git", "monitoring"]
+categories = ["command-line-utilities", "development-tools"]
+
+[package.metadata.docs.rs]
+# Features to enable when building docs
+all-features = true
+# Build docs for all target platforms
+targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-apple-darwin"]
 
 [[bin]]
 name = "devhealth"
@@ -15,3 +27,6 @@ clap = { version = "4.0", features = ["derive"] }
 walkdir = "2.3"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+tempfile = "3.0"
