@@ -59,7 +59,7 @@ mod cli_interface {
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         assert!(
-            stdout.contains("0.1.0"),
+            stdout.contains("0.2.0"),
             "Should display correct version number"
         );
     }
@@ -220,6 +220,19 @@ mod scan_command {
     fn runs_dependency_scan_when_deps_flag_provided() {
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
+        // Create a test Cargo.toml file
+        let cargo_toml_content = r#"
+[package]
+name = "test-project"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+clap = "4.0"
+"#;
+        fs::write(temp_dir.path().join("Cargo.toml"), cargo_toml_content)
+            .expect("Failed to create test Cargo.toml");
+
         let output = run_devhealth(&[
             "scan",
             "--deps",
@@ -238,8 +251,60 @@ mod scan_command {
             "Should indicate dependency checking"
         );
         assert!(
-            stdout.contains("Dependency scanning not implemented yet"),
-            "Should show placeholder message"
+            stdout.contains("Dependency Summary"),
+            "Should show dependency summary"
+        );
+        assert!(
+            stdout.contains("Total dependencies:"),
+            "Should show total dependency count"
+        );
+        assert!(stdout.contains("Rust:"), "Should detect Rust ecosystem");
+    }
+
+    #[test]
+    fn detects_multiple_ecosystems_in_single_project() {
+        let temp_dir = TempDir::new().expect("Failed to create temp directory");
+
+        // Create both Cargo.toml and package.json
+        let cargo_content = r#"
+[package]
+name = "multi-ecosystem"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+"#;
+        let package_content = r#"
+{
+  "name": "multi-ecosystem",
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}
+"#;
+
+        fs::write(temp_dir.path().join("Cargo.toml"), cargo_content)
+            .expect("Failed to create Cargo.toml");
+        fs::write(temp_dir.path().join("package.json"), package_content)
+            .expect("Failed to create package.json");
+
+        let output = run_devhealth(&[
+            "scan",
+            "--deps",
+            "--path",
+            temp_dir.path().to_str().unwrap(),
+        ]);
+
+        assert!(
+            output.status.success(),
+            "Mixed ecosystem scan should succeed"
+        );
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(stdout.contains("Rust:"), "Should detect Rust dependencies");
+        assert!(
+            stdout.contains("Node.js:"),
+            "Should detect Node.js dependencies"
         );
     }
 
