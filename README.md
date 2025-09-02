@@ -13,11 +13,18 @@ A comprehensive CLI tool for monitoring and maintaining the health of software d
   - Track unpushed commits
   - Monitor branch information
   - Recursive directory scanning
+- **Dependency Analysis**: Monitor project dependencies across multiple ecosystems
+  - Rust (Cargo.toml) dependency parsing
+  - Node.js (package.json) dependency parsing  
+  - Python (requirements.txt, pyproject.toml, Pipfile) dependency parsing
+  - Go (go.mod) dependency parsing
+  - Multi-ecosystem project support
 
 ### Planned Features
-- **Dependency Analysis**: Monitor project dependencies for security and updates
 - **System Monitoring**: Track system resource usage and performance
 - **Project Analytics**: Analyze code quality metrics and technical debt
+- **Security Scanning**: Vulnerability detection and license compliance
+- **Watch Mode**: Continuous monitoring of development environment
 
 ## Installation
 
@@ -56,7 +63,7 @@ Perform detailed analysis with specific scanners:
 # Scan git repositories only
 devhealth scan --git
 
-# Scan dependencies only (planned)
+# Scan dependencies only
 devhealth scan --deps
 
 # Monitor system resources (planned)
@@ -82,6 +89,21 @@ devhealth scan --git --path /path/to/projects
   ✅ Clean my-project (main)
   ⚠️  Dirty web-app (develop) 🔄
   ✅ Clean utils-lib (main)
+
+📦 Dependency Summary:
+  Total projects: 2
+  Total dependencies: 15
+  Ecosystems found: 2
+    Rust: 8 dependencies
+    Node.js: 7 dependencies
+
+📁 Project Details:
+  📂 my-project (8 deps)
+    Rust (8)
+      serde v1.0
+      clap v4.0 [dev]
+      tokio v1.0
+      ... and 5 more
 ```
 
 ## Development
@@ -137,7 +159,7 @@ cargo test
 - **`cli`**: Command-line interface definition and parsing
 - **`scanner`**: Analysis modules for different environment aspects
   - `git`: Git repository health analysis
-  - `deps`: Dependency scanning (planned)
+  - `deps`: Dependency scanning across multiple ecosystems
   - `system`: System resource monitoring (planned)
   - `analytics`: Project analytics (planned)
 - **`utils`**: Utility functions and helpers
@@ -146,14 +168,16 @@ cargo test
 ### Key Functions
 
 ```rust
-use devhealth::scanner::git;
+use devhealth::scanner::{git, deps};
 use std::path::Path;
 
 // Scan for git repositories
 let repos = git::scan_directory(Path::new("."))?;
-
-// Display results
 git::display_results(&repos);
+
+// Scan for dependencies
+let dep_reports = deps::scan_dependencies(Path::new("."))?;
+deps::display_results(&dep_reports);
 ```
 
 ## Contributing
@@ -194,10 +218,12 @@ src/
 
 ## Roadmap
 
-- [ ] **v0.2.0**: Dependency health scanning
+- [x] **v0.1.0**: Git repository health analysis
+- [x] **v0.2.0**: Dependency health scanning
 - [ ] **v0.3.0**: System resource monitoring
 - [ ] **v0.4.0**: Project analytics and metrics
 - [ ] **v0.5.0**: Configuration file support
+- [ ] **v0.6.0**: Security vulnerability scanning
 - [ ] **v1.0.0**: Stable release with full feature set
 
 ## FAQ

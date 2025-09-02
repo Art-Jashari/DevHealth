@@ -1,6 +1,6 @@
 # DevHealth Developer Guide
 
-## Documentation Tools for Rust 🦀
+## Documentation Tools for Rust 
 
 Yes! Rust has excellent built-in documentation tools, similar to Doxygen for C/C++:
 
