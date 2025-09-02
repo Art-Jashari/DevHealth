@@ -7,7 +7,7 @@
 //! ## Features
 //!
 //! - **Git Repository Health**: Scan directories for git repositories and check their status
-//! - **Dependency Analysis**: Monitor project dependencies (planned feature)
+//! - **Dependency Analysis**: Monitor project dependencies across multiple ecosystems
 //! - **System Monitoring**: Track system resource usage (planned feature)
 //! - **Project Analytics**: Analyze code quality metrics (planned feature)
 //!
@@ -35,6 +35,10 @@
 //! let path = Path::new(".");
 //! let repos = scanner::git::scan_directory(&path).unwrap();
 //! scanner::git::display_results(&repos);
+//!
+//! // Scan for dependencies
+//! let dep_reports = scanner::deps::scan_dependencies(&path).unwrap();
+//! scanner::deps::display_results(&dep_reports);
 //! ```
 
 pub mod cli;
@@ -71,7 +75,7 @@ mod tests {
         let _status = scanner::git::GitStatus::Clean;
 
         // Test that we can call functions from all scanner modules
-        scanner::deps::scan_dependencies();
+        let _deps_result = scanner::deps::scan_dependencies(std::path::Path::new("."));
         scanner::system::monitor_system();
         scanner::analytics::analyze_projects();
     }

@@ -66,7 +66,10 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
             if deps {
                 println!("\n📦 Checking dependencies...");
-                scanner::deps::scan_dependencies();
+                match scanner::deps::scan_dependencies(&path) {
+                    Ok(dep_reports) => scanner::deps::display_results(&dep_reports),
+                    Err(e) => eprintln!("Error scanning dependencies: {}", e),
+                }
             }
 
             if system {

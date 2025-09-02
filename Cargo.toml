@@ -1,6 +1,6 @@
 [package]
 name = "devhealth"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Art-Jashari <artjashari300@gmail.com>"]
 description = "A CLI tool for monitoring your development environment health"
@@ -26,7 +26,12 @@ path = "src/main.rs"
 clap = { version = "4.0", features = ["derive"] }
 walkdir = "2.3"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 tokio = { version = "1.0", features = ["full"] }
+toml = "0.8"
+reqwest = { version = "0.11", features = ["json"] }
+semver = "1.0"
+thiserror = "1.0"
 
 [dev-dependencies]
 tempfile = "3.0"

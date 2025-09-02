@@ -4,7 +4,7 @@
 //! of development environments:
 //!
 //! - [`git`]: Git repository health and status analysis
-//! - [`deps`]: Dependency health checking (planned)
+//! - [`deps`]: Dependency health checking across multiple ecosystems
 //! - [`system`]: System resource monitoring (planned)
 //! - [`analytics`]: Project analytics and metrics (planned)
 

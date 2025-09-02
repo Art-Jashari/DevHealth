@@ -14,7 +14,7 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = "devhealth")]
 #[command(about = "A CLI tool for monitoring your development environment health")]
-#[command(version = "0.1.0")]
+#[command(version = "0.2.0")]
 pub struct Cli {
     /// The subcommand to execute
     #[command(subcommand)]
@@ -63,7 +63,7 @@ pub enum Commands {
         ///
         /// Enables dependency health analysis for various project types
         /// (Cargo.toml, package.json, requirements.txt, etc.).
-        /// Note: This feature is currently under development.
+        /// Analyzes dependency versions, types, and ecosystem health.
         #[arg(long)]
         deps: bool,
 
