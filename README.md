@@ -13,12 +13,15 @@ A comprehensive CLI tool for monitoring and maintaining the health of software d
   - Track unpushed commits
   - Monitor branch information
   - Recursive directory scanning
+  - **Enhanced colorized display** with health percentages and progress bars
 - **Dependency Analysis**: Monitor project dependencies across multiple ecosystems
-  - Rust (Cargo.toml) dependency parsing
-  - Node.js (package.json) dependency parsing  
+  - Rust (Cargo.toml) dependency parsing with proper direct/indirect detection
+  - Node.js (package.json) dependency parsing with dev/peer dependencies
   - Python (requirements.txt, pyproject.toml, Pipfile) dependency parsing
-  - Go (go.mod) dependency parsing
+  - Go (go.mod) dependency parsing with require block support
   - Multi-ecosystem project support
+  - **Professional tree-structured output** with ecosystem breakdown
+  - **Color-coded dependency badges** and type indicators
 
 ### Planned Features
 - **System Monitoring**: Track system resource usage and performance
@@ -78,33 +81,83 @@ devhealth scan --git --path /path/to/projects
 
 ## Example Output
 
+DevHealth now features **colorized, structured output** for enhanced readability:
+
+### Git Repository Health
 ```
-🔍 Running health check on: .
+🚀 Starting comprehensive scan on: .
 
-📊 Git Repository Summary:
-  Total repositories: 3
-  Clean: 2, Dirty: 1, Errors: 0
+� Scanning Git repositories...
+🔴 Git Repository Health (33%)
+┌─ Summary ─────────────────────────────────────────┐
+│ Total Repositories   │ 3                          │
+│ Clean                │ 1 [███░░░░░░░] 1/3         │
+│ Dirty                │ 2 ⚠️                       │
+│ Errors               │ 0                          │
+└───────────────────────────────────────────────────┘
 
-📁 Repository Details: 
-  ✅ Clean my-project (main)
-  ⚠️  Dirty web-app (develop) 🔄
-  ✅ Clean utils-lib (main)
+──────────────────────────────────────────────────
+▶ Repository Details
+──────────────────────────────────────────────────
+├─ ✅ Clean my-project on main  ./my-project
+├─ ⚠ Dirty web-app on develop  ./web-app
+└─ ⚠ Dirty utils-lib on main  ./utils-lib
 
-📦 Dependency Summary:
-  Total projects: 2
-  Total dependencies: 15
-  Ecosystems found: 2
-    Rust: 8 dependencies
-    Node.js: 7 dependencies
-
-📁 Project Details:
-  📂 my-project (8 deps)
-    Rust (8)
-      serde v1.0
-      clap v4.0 [dev]
-      tokio v1.0
-      ... and 5 more
+💡 Tip:
+  • Use git add . && git commit or git stash to clean dirty repositories
 ```
+
+### Dependency Analysis
+```
+📦 Dependency Analysis (3 ecosystems)
+┌─ Summary ─────────────────────────────────────────┐
+│ Total Projects       │ 2                          │
+│ Total Dependencies   │ 24                         │
+│ Ecosystems           │ 3                          │
+│ Errors               │ 0                          │
+└───────────────────────────────────────────────────┘
+
+──────────────────────────────────────────────────
+▶ Ecosystem Breakdown
+──────────────────────────────────────────────────
+  🦀 Rust 8 dependencies
+  📦 Node.js 11 dependencies
+  🐍 Python 5 dependencies
+
+──────────────────────────────────────────────────
+▶ Project Details
+──────────────────────────────────────────────────
+└─ 📂 my-project (24 deps) dependencies
+  ├─ 🦀 Rust (8 deps)
+    ├─ serde 1.0  prod  ./Cargo.toml
+    ├─ clap 4.0  prod  ./Cargo.toml
+    ├─ tokio 1.0  prod  ./Cargo.toml
+    ├─ colored 2.0  prod  ./Cargo.toml
+    ├─ thiserror 1.0  prod  ./Cargo.toml
+    └─ ... 3 more dependencies
+  ├─ 📦 Node.js (11 deps)
+    ├─ express ^4.18.2  prod  ./package.json
+    ├─ react ^18.2.0  prod  ./package.json
+    ├─ typescript ^5.0.0  dev  ./package.json
+    └─ ... 8 more dependencies
+  └─ 🐍 Python (5 deps)
+    ├─ requests 2.31.0  prod  ./requirements.txt
+    ├─ flask 2.3.0  prod  ./requirements.txt
+    └─ ... 3 more dependencies
+
+💡 Tips:
+  • Check for updates: Run package manager update commands
+  • Security scan: Use tools like cargo audit, npm audit, or safety
+  • Clean unused deps: Remove dependencies you're not using
+```
+
+### Key Visual Features
+- 🎨 **Color-coded output** for better readability
+- 📊 **Progress bars** and health percentages  
+- 🌳 **Tree-structured** project breakdowns
+- 🏷️ **Dependency type badges** (prod/dev/build/optional)
+- 🔗 **Ecosystem icons** (🦀 Rust, 📦 Node.js, 🐍 Python, 🐹 Go)
+- 💡 **Helpful tips** for next steps
 
 ## Development
 
@@ -164,6 +217,7 @@ cargo test
   - `analytics`: Project analytics (planned)
 - **`utils`**: Utility functions and helpers
   - `fs`: File system operations
+  - `display`: Terminal output formatting and colorization utilities
 
 ### Key Functions
 
@@ -209,17 +263,18 @@ src/
 ├── cli.rs           # Command-line interface definition
 ├── scanner/         # Analysis modules
 │   ├── git.rs       # Git repository analysis
-│   ├── deps.rs      # Dependency scanning (planned)
+│   ├── deps.rs      # Dependency scanning
 │   ├── system.rs    # System monitoring (planned)
 │   └── analytics.rs # Project analytics (planned)
 └── utils/           # Utility functions
-    └── fs.rs        # File system operations
+    ├── fs.rs        # File system operations
+    └── display.rs   # Terminal output formatting and colors
 ```
 
 ## Roadmap
 
 - [x] **v0.1.0**: Git repository health analysis
-- [x] **v0.2.0**: Dependency health scanning
+- [x] **v0.2.0**: Dependency health scanning with enhanced colorized display
 - [ ] **v0.3.0**: System resource monitoring
 - [ ] **v0.4.0**: Project analytics and metrics
 - [ ] **v0.5.0**: Configuration file support

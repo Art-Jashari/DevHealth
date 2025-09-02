@@ -4,7 +4,8 @@
 //! within a directory tree. It can detect repository status, branch information,
 //! uncommitted changes, and unpushed commits.
 
-use crate::utils::fs;
+use crate::utils::{fs, display};
+use colored::*;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -200,44 +201,94 @@ fn analyze_git_repo(repo_path: &Path) -> Result<GitRepo, Box<dyn std::error::Err
 /// - Detailed list with status, name, branch, and unpushed commit indicators
 pub fn display_results(repos: &[GitRepo]) {
     if repos.is_empty() {
-        println!("  No git repositories found.");
+        println!("{}", display::header("No git repositories found", "📂", colored::Color::Yellow));
         return;
     }
 
-    println!("\n📊 Git Repository Summary:");
-    println!("  Total repositories: {}", repos.len());
+    // Calculate statistics
+    let total_repos = repos.len();
+    let clean_count = repos.iter().filter(|r| matches!(r.status, GitStatus::Clean)).count();
+    let dirty_count = repos.iter().filter(|r| matches!(r.status, GitStatus::Dirty)).count();
+    let error_count = repos.iter().filter(|r| matches!(r.status, GitStatus::Error(_))).count();
+    
+    // Calculate health percentage
+    let health_percentage = if total_repos > 0 {
+        (clean_count * 100) / total_repos
+    } else {
+        0
+    };
 
-    let clean_count = repos
-        .iter()
-        .filter(|r| matches!(r.status, GitStatus::Clean))
-        .count();
-    let dirty_count = repos
-        .iter()
-        .filter(|r| matches!(r.status, GitStatus::Dirty))
-        .count();
-    let error_count = repos
-        .iter()
-        .filter(|r| matches!(r.status, GitStatus::Error(_)))
-        .count();
+    // Display header with health indicator
+    let health_emoji = match health_percentage {
+        90..=100 => "🟢",
+        70..=89 => "🟡", 
+        _ => "🔴",
+    };
+    
+    println!("{}", display::header(
+        &format!("Git Repository Health ({}%)", health_percentage), 
+        health_emoji, 
+        colored::Color::BrightBlue
+    ));
 
-    println!(
-        "  Clean: {}, Dirty: {}, Errors: {}",
-        clean_count, dirty_count, error_count
-    );
+    // Display summary box
+    let summary_items = vec![
+        ("Total Repositories", total_repos.to_string()),
+        ("Clean", format!("{} {}", clean_count, display::progress_bar(clean_count, total_repos, 10))),
+        ("Dirty", format!("{} {}", dirty_count, if dirty_count > 0 { "⚠️".yellow().to_string() } else { "".to_string() })),
+        ("Errors", format!("{} {}", error_count, if error_count > 0 { "❌".red().to_string() } else { "".to_string() })),
+    ];
+    
+    print!("{}", display::summary_box(&summary_items));
 
-    println!("\n📁 Repository Details: ");
-    for repo in repos {
-        let path_str = repo
-            .path
+    // Display detailed repository list
+    println!("{}", display::section_divider("Repository Details"));
+    
+    for (index, repo) in repos.iter().enumerate() {
+        let is_last = index == repos.len() - 1;
+        let path_name = repo.path
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("unknown");
 
-        let unpushed_indicator = if repo.unpushed_commits { " 🔄" } else { "" };
+        // Format repository status with colors
+        let status_display = match &repo.status {
+            GitStatus::Clean => format!("{} {}", "✓".bright_green().bold(), "Clean".bright_green()),
+            GitStatus::Dirty => format!("{} {}", "⚠".bright_yellow().bold(), "Dirty".bright_yellow()),
+            GitStatus::Error(msg) => format!("{} {} ({})", "✗".bright_red().bold(), "Error".bright_red(), msg.bright_red()),
+        };
 
-        println!(
-            "  {} {} ({}){}",
-            repo.status, path_str, repo.branch, unpushed_indicator
+        // Add branch information with styling
+        let branch_display = format!("{} {}", 
+            "on".bright_black(), 
+            repo.branch.bright_cyan().bold()
+        );
+
+        // Add indicators for unpushed commits
+        let indicators = if repo.unpushed_commits {
+            format!(" {}", "↑".bright_blue().bold())
+        } else {
+            "".to_string()
+        };
+
+        let content = format!("{} {} {} {} {}", 
+            status_display,
+            path_name.bright_white().bold(),
+            branch_display,
+            indicators,
+            display::file_path(&repo.path.to_string_lossy())
+        );
+
+        println!("{}", display::tree_item(&content, is_last, 0));
+    }
+
+    // Display tips for dirty repositories
+    if dirty_count > 0 {
+        println!("\n{}", "💡 Tip:".bright_blue().bold());
+        println!("  {} Use {} or {} to clean dirty repositories", 
+            "•".bright_black(),
+            "git add . && git commit".bright_green(),
+            "git stash".bright_yellow()
         );
     }
 }

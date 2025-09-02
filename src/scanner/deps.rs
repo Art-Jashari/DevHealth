@@ -11,6 +11,8 @@
 //! The scanner identifies dependency files, parses them, and provides
 //! health information including outdated packages and potential security issues.
 
+use crate::utils::display;
+use colored::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
@@ -539,19 +541,59 @@ fn parse_go_mod(project_path: &Path) -> Result<Vec<Dependency>, DependencyError>
     let go_mod_path = project_path.join("go.mod");
     let content = fs::read_to_string(&go_mod_path)?;
     let mut dependencies = Vec::new();
+    let mut in_require_block = false;
 
     for line in content.lines() {
         let line = line.trim();
-        if line.starts_with("require ") {
+        
+        // Check if we're entering a require block
+        if line.starts_with("require (") {
+            in_require_block = true;
+            continue;
+        }
+        
+        // Check if we're exiting a require block
+        if in_require_block && line == ")" {
+            in_require_block = false;
+            continue;
+        }
+        
+        // Parse single-line require statements
+        if line.starts_with("require ") && !line.ends_with("(") {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 3 {
                 let name = parts[1].to_string();
                 let version = parts[2].to_string();
+                let dep_type = DependencyType::Runtime;
 
                 dependencies.push(Dependency {
                     name,
                     version,
-                    dependency_type: DependencyType::Runtime,
+                    dependency_type: dep_type,
+                    ecosystem: Ecosystem::Go,
+                    source_file: go_mod_path.clone(),
+                });
+            }
+        }
+        
+        // Parse dependencies inside require blocks
+        if in_require_block && !line.is_empty() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 2 {
+                let name = parts[0].to_string();
+                let version = parts[1].to_string();
+                
+                // Determine dependency type based on comments
+                let dep_type = if line.contains("// indirect") {
+                    DependencyType::Development
+                } else {
+                    DependencyType::Runtime
+                };
+
+                dependencies.push(Dependency {
+                    name,
+                    version,
+                    dependency_type: dep_type,
                     ecosystem: Ecosystem::Go,
                     source_file: go_mod_path.clone(),
                 });
@@ -622,7 +664,7 @@ fn extract_version_from_toml_value(value: toml::Value) -> String {
 /// ```
 pub fn display_results(reports: &[DependencyReport]) {
     if reports.is_empty() {
-        println!("  No dependency files found.");
+        println!("{}", display::header("No dependency files found", "📦", colored::Color::Yellow));
         return;
     }
 
@@ -631,29 +673,70 @@ pub fn display_results(reports: &[DependencyReport]) {
     let ecosystems: std::collections::HashSet<_> =
         reports.iter().flat_map(|r| &r.ecosystems).collect();
 
-    println!("\n📦 Dependency Summary:");
-    println!("  Total projects: {}", total_projects);
-    println!("  Total dependencies: {}", total_dependencies);
-    println!("  Ecosystems found: {}", ecosystems.len());
+    // Calculate dependency health metrics
+    let total_errors: usize = reports.iter().map(|r| r.errors.len()).sum();
+    
+    // Display main header
+    println!("{}", display::header(
+        &format!("Dependency Analysis ({} ecosystems)", ecosystems.len()), 
+        "📦", 
+        colored::Color::BrightMagenta
+    ));
 
-    for ecosystem in &ecosystems {
-        let count: usize = reports
-            .iter()
-            .flat_map(|r| &r.dependencies)
-            .filter(|d| d.ecosystem == **ecosystem)
-            .count();
-        println!("    {}: {} dependencies", ecosystem, count);
+    // Display summary box
+    let summary_items = vec![
+        ("Total Projects", total_projects.to_string()),
+        ("Total Dependencies", total_dependencies.to_string()),
+        ("Ecosystems", ecosystems.len().to_string()),
+        ("Errors", if total_errors > 0 { 
+            format!("{} ❌", total_errors) 
+        } else { 
+            "0".to_string() 
+        }),
+    ];
+    
+    print!("{}", display::summary_box(&summary_items));
+
+    // Display ecosystem breakdown
+    if !ecosystems.is_empty() {
+        println!("{}", display::section_divider("Ecosystem Breakdown"));
+        
+        for ecosystem in &ecosystems {
+            let count: usize = reports
+                .iter()
+                .flat_map(|r| &r.dependencies)
+                .filter(|d| d.ecosystem == **ecosystem)
+                .count();
+            
+            let ecosystem_display = format!("{} {} {} dependencies", 
+                display::ecosystem_icon(&ecosystem.to_string()),
+                ecosystem.to_string().bright_cyan().bold(),
+                count.to_string().bright_white().bold()
+            );
+            
+            println!("  {}", ecosystem_display);
+        }
     }
 
-    println!("\n📁 Project Details:");
-    for report in reports {
+    // Display detailed project breakdown
+    println!("{}", display::section_divider("Project Details"));
+    
+    for (project_index, report) in reports.iter().enumerate() {
+        let is_last_project = project_index == reports.len() - 1;
         let project_name = report
             .project_path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
 
-        println!("  📂 {} ({} deps)", project_name, report.dependencies.len());
+        // Project header with dependency count
+        let project_header = format!("{} {} {} dependencies", 
+            "📂".to_string(),
+            project_name.bright_white().bold(),
+            format!("({} deps)", report.dependencies.len()).bright_black()
+        );
+        
+        println!("{}", display::tree_item(&project_header, is_last_project, 0));
 
         // Group by ecosystem for cleaner display
         let mut ecosystem_deps: HashMap<Ecosystem, Vec<&Dependency>> = HashMap::new();
@@ -664,29 +747,94 @@ pub fn display_results(reports: &[DependencyReport]) {
                 .push(dep);
         }
 
-        for (ecosystem, deps) in ecosystem_deps {
-            println!("    {} ({})", ecosystem, deps.len());
-            for dep in deps.iter().take(5) {
-                // Limit to first 5 for readability
-                let type_indicator = match dep.dependency_type {
-                    DependencyType::Runtime => "",
-                    DependencyType::Development => " [dev]",
-                    DependencyType::Build => " [build]",
-                    DependencyType::Optional => " [opt]",
+        // Display dependencies by ecosystem
+        for (ecosystem_index, (ecosystem, deps)) in ecosystem_deps.iter().enumerate() {
+            let is_last_ecosystem = ecosystem_index == ecosystem_deps.len() - 1 && report.errors.is_empty();
+            
+            let ecosystem_header = format!("{} {} {}", 
+                display::ecosystem_icon(&ecosystem.to_string()),
+                ecosystem.to_string().bright_cyan(),
+                format!("({} deps)", deps.len()).bright_black()
+            );
+            
+            println!("{}", display::tree_item(&ecosystem_header, is_last_ecosystem, 1));
+
+            // Show top dependencies (with limit for readability)
+            let deps_to_show = deps.iter().take(8);
+            let remaining = if deps.len() > 8 { deps.len() - 8 } else { 0 };
+            
+            for (dep_index, dep) in deps_to_show.enumerate() {
+                let is_last_dep = dep_index == 7.min(deps.len() - 1) && remaining == 0;
+                
+                // Create dependency badge
+                let type_badge = match dep.dependency_type {
+                    DependencyType::Runtime => display::badge("prod", display::BadgeType::Runtime),
+                    DependencyType::Development => display::badge("dev", display::BadgeType::Dev),
+                    DependencyType::Build => display::badge("build", display::BadgeType::Build),
+                    DependencyType::Optional => display::badge("opt", display::BadgeType::Optional),
                 };
-                println!("      {} v{}{}", dep.name, dep.version, type_indicator);
+
+                let dep_display = format!("{} {} {}", 
+                    display::version_display(&dep.name, &dep.version, None),
+                    type_badge,
+                    {
+                        let path = dep.source_file.to_string_lossy();
+                        let path_str = if path.len() > 35 {
+                            format!("...{}", &path[path.len()-32..])
+                        } else {
+                            path.to_string()
+                        };
+                        display::file_path(&path_str)
+                    }
+                );
+                
+                println!("{}", display::tree_item(&dep_display, is_last_dep, 2));
             }
-            if deps.len() > 5 {
-                println!("      ... and {} more", deps.len() - 5);
+            
+            // Show "... and X more" if there are remaining dependencies
+            if remaining > 0 {
+                let more_display = format!("{} {} more dependencies", 
+                    "...".bright_black(),
+                    remaining.to_string().bright_black()
+                );
+                println!("{}", display::tree_item(&more_display, is_last_ecosystem, 2));
             }
         }
 
         // Display any errors
         if !report.errors.is_empty() {
-            println!("    ⚠️ Errors:");
-            for error in &report.errors {
-                println!("      {}", error);
+            let error_header = format!("{} {} Errors", "⚠️".bright_red(), report.errors.len());
+            println!("{}", display::tree_item(&error_header, true, 1));
+            
+            for (error_index, error) in report.errors.iter().enumerate() {
+                let is_last_error = error_index == report.errors.len() - 1;
+                let error_display = format!("{}", error.bright_red());
+                println!("{}", display::tree_item(&error_display, is_last_error, 2));
             }
+        }
+        
+        // Add spacing between projects
+        if !is_last_project {
+            println!();
+        }
+    }
+
+    // Display helpful tips
+    if total_dependencies > 0 {
+        println!("\n{}", "💡 Tips:".bright_blue().bold());
+        
+        let tips = vec![
+            ("Check for updates", "Run package manager update commands"),
+            ("Security scan", "Use tools like cargo audit, npm audit, or safety"),
+            ("Clean unused deps", "Remove dependencies you're not using"),
+        ];
+        
+        for tip in tips {
+            println!("  {} {}: {}", 
+                "•".bright_black(),
+                tip.0.bright_cyan(),
+                tip.1.bright_white()
+            );
         }
     }
 }

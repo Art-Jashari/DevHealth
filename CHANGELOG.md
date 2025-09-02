@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Enhanced
+- **Major Display Improvements** - Complete UI/UX overhaul
+  - Added colorized terminal output with `colored` crate
+  - Enhanced dependency scanner with structured display
+    - Summary boxes with key metrics
+    - Tree-structured project breakdown
+    - Ecosystem breakdown with dependency counts
+    - Color-coded dependency type badges (prod/dev/build/optional)
+    - Ecosystem icons (🦀 Rust, 📦 Node.js, 🐍 Python, 🐹 Go)
+    - Helpful tips section for dependency management
+  - Enhanced git scanner with visual health indicators
+    - Health percentage calculations and progress bars
+    - Color-coded status indicators
+    - Structured summary boxes
+    - Professional tree-style repository details
+  - Created comprehensive display utilities module (`src/utils/display.rs`)
+    - Reusable formatting functions for headers, boxes, progress bars
+    - Consistent styling across all scanners
+
+### Fixed
+- **Go Dependency Parsing** - Fixed critical parsing bug
+  - Previously showed 0 dependencies for `go.mod` files
+  - Now correctly parses both single-line and block-style `require` statements
+  - Properly identifies direct vs indirect dependencies (prod vs dev)
+- **File Path Display** - Improved readability
+  - File paths now show complete filenames instead of truncated versions
+  - Better path handling for long file paths
+
+### Dependencies
+- Added `colored` v2.0 for terminal output colorization
+
 ## [0.2.0] - 2025-08-31
 
 ### Added
